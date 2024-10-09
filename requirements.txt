@@ -1,0 +1,2 @@
+google-generativeai
+streamlit==1.39.0
