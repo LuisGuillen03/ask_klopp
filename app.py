@@ -1,10 +1,7 @@
 import time
-import os
 import streamlit as st
 import google.generativeai as genai
-from dotenv import load_dotenv
 from prompt_augmentation import generate_augmented_prompt
-load_dotenv()
 GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=GOOGLE_API_KEY)
 MODEL_ROLE = 'ai'
