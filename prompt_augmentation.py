@@ -1,7 +1,7 @@
 from similarity_utilities import search_similar_documents
 import os
 
-def generate_augmented_prompt(prompt):
+def generate_augmented_prompt(prompt, context_db):
     # Buscar los 5 documentos más relevantes
     top_documents, top_distances = search_similar_documents(prompt)
     

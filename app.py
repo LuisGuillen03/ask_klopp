@@ -7,6 +7,12 @@ genai.configure(api_key=GOOGLE_API_KEY)
 MODEL_ROLE = 'ai'
 AI_AVATAR_ICON = '✨'
 
+# Sidebar para seleccionar funciones adicionales
+st.sidebar.title("Opciones")
+context_db = st.sidebar.selectbox(
+    "Circulo",
+    ["Inversion"]
+)
 
 st.write('# Ask Klopp')
 
@@ -39,7 +45,7 @@ if prompt := st.chat_input('Ask Klopp...'):
         )
     )
     ## Send message to AI
-    prompt_with_context = generate_augmented_prompt(prompt)
+    prompt_with_context = generate_augmented_prompt(prompt, context_db)
     print(prompt_with_context)
     response = st.session_state.chat.send_message(
         prompt_with_context,
