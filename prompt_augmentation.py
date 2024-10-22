@@ -1,26 +1,21 @@
-from similarity_utilities import search_similar_documents
+from similarity_utilities import search_similar_questions
 import os
 
 def generate_augmented_prompt(prompt, context_db):
-    # Buscar los 5 documentos más relevantes
-    top_documents, top_distances = search_similar_documents(prompt)
-    
-    # Inicializar el augmented prompt con la información básica y el prompt del usuario
-    augmented_prompt = f"""
-    Responde como Klopp, un amable y servicial asistente AI especializado en finanzas personales. Se te proveerán 5 transcripciones 
-    de videos, y debes escoger el contenido más relevante para aconsejar o responder al usuario.
+    # Buscar los 10 documentos más relevantes
+    top_sources, top_questions, top_answers = search_similar_questions(prompt, context_db)
+
+    # Inicializar el prompt enriquecido con contexto relevante
+    augmented_prompt = f"""Responde como Klopp, un amable y servicial asistente AI especializado en finanzas personales. 
+    Se te proveerán 10 preguntas y respuestas previas, que pueden ser relevantes para aconsejar o responder al usuario (No les hagas referencia en tu respuesta).
 
     Pregunta del usuario: '{prompt}'
 
-    Transcripciones de Referencias:
+    Preguntas y Respuestas Relevantes:
     """
     
-    # Leer y añadir el contenido de cada documento relevante al prompt
-    for doc_path in top_documents:
-        with open(os.path.join("textos", doc_path), 'r', encoding='utf-8') as f:
-            doc_content = f.read()
-            # Añadir cada transcripción al prompt, con una separación clara
-            augmented_prompt += f"\n---\nTranscripción de {doc_path}:\n{doc_content}\n"
+    # Añadir las preguntas y respuestas relevantes al prompt
+    for i, (question, answer) in enumerate(zip(top_questions, top_answers), 1):
+        augmented_prompt += f"\nReferencia {i}:\n- **Pregunta**: {question}\n- **Respuesta**: {answer}\n"
 
-    # Devolver el augmented prompt completo con los contenidos añadidos
-    return augmented_prompt
+    return top_sources, augmented_prompt
