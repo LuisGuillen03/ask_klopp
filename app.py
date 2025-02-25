@@ -23,7 +23,7 @@ if prompt := st.chat_input("What is up?"):
         headers = {"KloppChat-API-Key": "KLOPP_CHAT_API_KEY"}
         
         # Llamada a la API
-        response = requests.post(st.secrets["KLOPP_CHAT_URL"], json=payload, headers=headers)
+        response = requests.get(st.secrets["KLOPP_CHAT_URL"], json=payload, headers=headers)
         data = response.json()
         
         # Extraer el contenido de la respuesta
