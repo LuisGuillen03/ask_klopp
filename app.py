@@ -1,44 +1,46 @@
 import streamlit as st
-from prompt_augmentation import generate_augmented_prompt
-from clients import openai_client
+import requests
 
 st.title("Ask Klopp")
-
-st.sidebar.title("Opciones")
-context_db = st.sidebar.selectbox(
-    "Circulo",
-    ["Inversion"]
-)
-
-if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Mostrar el historial de mensajes
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Entrada del usuario
 if prompt := st.chat_input("What is up?"):
-    sources , augmented_prompt = generate_augmented_prompt(prompt, context_db.lower())
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    st.session_state.messages.append({"role": "USER", "content": prompt})
+    with st.chat_message("USER"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        stream = openai_client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages[:-1]  # Todos menos el último mensaje
-            ] + [{"role": "user", "content": augmented_prompt}],  # Añadir el augmented prompt como último mensaje
-            stream=True,
-        )
-        response = st.write_stream(stream)
-        # Añadir las fuentes como referencias al final de la respuesta
-        references = "\nReferencias:\n" + "\n".join(f"- {source}" for source in sources)
-        st.markdown(references)
-
-    # Añadir la respuesta completa del asistente a la sesión
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    with st.chat_message("ASSISTANT"):
+        # Preparar payload para la API
+        payload = {"messages": [{"role": "USER", "content": prompt}]}
+        headers = {"KloppChat-API-Key": "KLOPP_CHAT_API_KEY"}
+        
+        # Llamada a la API
+        response = requests.post(st.secrets["KLOPP_CHAT_URL"], json=payload, headers=headers)
+        data = response.json()
+        
+        # Extraer el contenido de la respuesta
+        answer = data.get("content", "")
+        st.markdown(answer)
+        
+        # Extraer la URL de los videos (fuentes)
+        sources = []
+        media = data.get("media", {})
+        for video in media.get("videos", []):
+            url = video.get("url")
+            if url:
+                sources.append(url)
+        
+        if sources:
+            references = "\nReferencias:\n" + "\n".join(f"- {source}" for source in sources)
+            st.markdown(references)
+    
+    # Agregar la respuesta del asistente al historial de mensajes
+    st.session_state.messages.append({"role": "ASSISTANT", "content": answer})
