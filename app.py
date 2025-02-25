@@ -1,5 +1,16 @@
 import streamlit as st
 import requests
+import vimeo
+
+def vimeo_authentication():
+    client = vimeo.VimeoClient(
+        token=st.secrets['VIMEO_TOKEN'],
+        key=st.secrets['VIMEO_KEY'],
+        secret=st.secrets['VIMEO_SECRET']
+    )
+    return client
+
+vimeo_client = vimeo_authentication()
 
 st.title("Ask Klopp")
 
@@ -20,13 +31,11 @@ if prompt := st.chat_input("What is up?"):
     with st.chat_message("ASSISTANT"):
         # Preparar payload para la API
         payload = {"messages": [{"role": "USER", "content": prompt}]}
-        headers = {"KloppChat-API-Key": "KLOPP_CHAT_API_KEY"}
+        headers = {"KloppChat-API-Key": st.secrets["KLOPP_CHAT_API_KEY"]}
         
         # Llamada a la API
         response = requests.get(st.secrets["KLOPP_CHAT_URL"], json=payload, headers=headers)
-        print(response)
         data = response.json()
-        
         # Extraer el contenido de la respuesta
         answer = data.get("content", "")
         st.markdown(answer)
@@ -40,8 +49,17 @@ if prompt := st.chat_input("What is up?"):
                 sources.append(url)
         
         if sources:
-            references = "\nReferencias:\n" + "\n".join(f"- {source}" for source in sources)
-            st.markdown(references)
-    
+            st.markdown("\nReferencias:\n\n")
+            for url in sources:
+                video_id = url.split("/")[-1]
+                response = vimeo_client.get(f'https://api.vimeo.com/videos/{video_id}')
+                response_json = response.json()
+                st.markdown(response_json["link"])
+                iframe = f'''
+                <iframe src="{response_json["player_embed_url"]}" width="640" height="360" frameborder="0"
+                allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                '''
+                st.markdown(iframe, unsafe_allow_html=True)
+            
     # Agregar la respuesta del asistente al historial de mensajes
     st.session_state.messages.append({"role": "ASSISTANT", "content": answer})
