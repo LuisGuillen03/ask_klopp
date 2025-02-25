@@ -24,6 +24,7 @@ if prompt := st.chat_input("What is up?"):
         
         # Llamada a la API
         response = requests.get(st.secrets["KLOPP_CHAT_URL"], json=payload, headers=headers)
+        print(response)
         data = response.json()
         
         # Extraer el contenido de la respuesta
